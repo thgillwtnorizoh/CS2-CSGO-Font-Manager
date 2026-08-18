@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -147,11 +148,11 @@ namespace CSGO_Font_Manager
             string config = StripManagedOverride(baseConfig);
 
             config = Regex.Replace(config,
-                @"<dir\s+prefix=\"default\">\.\./\.\./csgo/panorama/fonts</dir>",
+                "<dir\\s+prefix=\"default\">\\.\\./\\.\\./csgo/panorama/fonts</dir>",
                 "<dir prefix=\"cwd\">../../csgo/panorama/fonts</dir>");
 
             config = Regex.Replace(config,
-                @"^[ \t]*<fontpattern>.*?</fontpattern>[ \t]*(?:\r?\n)?",
+                "^[ \\t]*<fontpattern>.*?</fontpattern>[ \\t]*(?:\\r?\\n)?",
                 string.Empty,
                 RegexOptions.Multiline);
 
@@ -182,11 +183,11 @@ namespace CSGO_Font_Manager
         private static string StripManagedOverride(string config)
         {
             string pattern =
-                @"[ \t]*<match\s+target=\"pattern\">\s*" +
-                @"<edit\s+name=\"family\"\s+mode=\"assign\"\s+binding=\"strong\">\s*" +
-                @"<string>[^<]+</string>\s*</edit>\s*" +
-                @"(?:<edit\s+name=\"pixelsize\"\s+mode=\"assign\">.*?</edit>\s*)?" +
-                @"</match>\s*(?=[ \t]*<include>\.\./\.\./\.\./core/panorama/fonts/conf\.d</include>)";
+                "[ \\t]*<match\\s+target=\"pattern\">\\s*" +
+                "<edit\\s+name=\"family\"\\s+mode=\"assign\"\\s+binding=\"strong\">\\s*" +
+                "<string>[^<]+</string>\\s*</edit>\\s*" +
+                "(?:<edit\\s+name=\"pixelsize\"\\s+mode=\"assign\">.*?</edit>\\s*)?" +
+                "</match>\\s*(?=[ \\t]*<include>\\.\\./\\.\\./\\.\\./core/panorama/fonts/conf\\.d</include>)";
 
             return Regex.Replace(config, pattern, string.Empty, RegexOptions.Singleline);
         }
