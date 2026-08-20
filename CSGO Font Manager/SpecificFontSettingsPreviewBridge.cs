@@ -21,7 +21,7 @@ namespace CSGO_Font_Manager
                 Form1 form = openForm as Form1;
                 if (form == null || form.IsDisposed || !form.specificSettingsUiInitialized) continue;
 
-                bool specific = form.CurrentFormView == FormViews.Main && form.specificSettingsTabActive;
+                bool specific = CurrentFormView == FormViews.Main && form.specificSettingsTabActive;
                 if (specific == form.specificPreviewBridgeLastState) continue;
                 form.specificPreviewBridgeLastState = specific;
 
