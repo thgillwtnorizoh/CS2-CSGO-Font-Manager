@@ -153,9 +153,6 @@ namespace CSGO_Font_Manager
             if (defaultPreviewPolishInitialized) return;
             defaultPreviewPolishInitialized = true;
 
-            // The original packaged preview rendered a private font through RichEdit.
-            // RichEdit can silently substitute an installed system font, so retire that
-            // preview path and render private CS2 fonts through GDI+ instead.
             trackBar1.Scroll -= packagedDefaultPreview_RefreshLater;
             customFontScaleButton.Click -= packagedDefaultPreview_RefreshLater;
             listBox1.SelectedIndexChanged -= packagedDefaultPreview_RefreshLater;
@@ -163,7 +160,6 @@ namespace CSGO_Font_Manager
             donate_button.Click -= packagedDefaultPreview_RefreshLater;
             ResetPackagedDefaultPreview();
 
-            // Make the scale button look like a small sibling of Apply Selected Font.
             customFontScaleButton.FlatStyle = apply_button.FlatStyle;
             customFontScaleButton.BackColor = apply_button.BackColor;
             customFontScaleButton.ForeColor = apply_button.ForeColor;
@@ -369,10 +365,6 @@ namespace CSGO_Font_Manager
             defaultPreviewTextLabel.Font = defaultPreviewRenderedFont;
             defaultPreviewTextLabel.Text = FontPreviewText;
 
-            // Do not dispose the previous Font immediately. WinForms may still have a
-            // queued paint using it, which turns the Label into the red-X error surface.
-            // Retain old preview Fonts for the short lifetime of the app and dispose them
-            // together when the form closes.
             if (previous != null && !ReferenceEquals(previous, defaultPreviewRenderedFont))
                 retiredPreviewFonts.Add(previous);
 
