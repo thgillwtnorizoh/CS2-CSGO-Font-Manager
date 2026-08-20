@@ -10,6 +10,28 @@ namespace CSGO_Font_Manager
 {
     public partial class Form1
     {
+        private sealed class SafePrivateFontPreviewLabel : Label
+        {
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                try
+                {
+                    base.OnPaint(e);
+                }
+                catch (ArgumentException)
+                {
+                    e.Graphics.Clear(BackColor);
+                    TextRenderer.DrawText(
+                        e.Graphics,
+                        "This CS2 font face cannot be previewed by Windows GDI+.",
+                        SystemFonts.MessageBoxFont,
+                        ClientRectangle,
+                        ForeColor,
+                        TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak);
+                }
+            }
+        }
+
         private sealed class Cs2PreviewChoice : IDisposable
         {
             public string SourceLabel;
@@ -20,6 +42,8 @@ namespace CSGO_Font_Manager
             public PrivateFontCollection Collection;
             public FontFamily Family;
             public string TempFilePath;
+            public bool PreviewRejected;
+            public string PreviewRejectReason;
 
             public string CandidateName
             {
@@ -97,10 +121,13 @@ namespace CSGO_Font_Manager
         private Panel defaultPreviewScrollPanel;
         private Label defaultPreviewTextLabel;
         private Font defaultPreviewRenderedFont;
+        private readonly List<Font> retiredPreviewFonts = new List<Font>();
         private readonly List<Cs2PreviewChoice> cs2PreviewChoices = new List<Cs2PreviewChoice>();
         private string cs2PreviewChoicesRoot;
         private string cs2PreviewTempDirectory;
         private int cs2PreviewChoiceIndex;
+        private Timer customScaleDialogStyleTimer;
+        private int customScaleDialogStyleAttempts;
 
         private static bool RegisterDefaultPreviewPolishBootstrap()
         {
@@ -141,6 +168,7 @@ namespace CSGO_Font_Manager
             customFontScaleButton.BackColor = apply_button.BackColor;
             customFontScaleButton.ForeColor = apply_button.ForeColor;
             customFontScaleButton.UseVisualStyleBackColor = false;
+            customFontScaleButton.MouseDown += customFontScaleButton_StartDialogPolish;
             fontScaleValueLabel.ForeColor = Color.WhiteSmoke;
 
             defaultPreviewScrollPanel = new Panel
@@ -152,7 +180,7 @@ namespace CSGO_Font_Manager
                 TabStop = false
             };
 
-            defaultPreviewTextLabel = new Label
+            defaultPreviewTextLabel = new SafePrivateFontPreviewLabel
             {
                 Name = "defaultPreviewTextLabel",
                 AutoSize = true,
@@ -181,7 +209,75 @@ namespace CSGO_Font_Manager
                 "When Default Font is selected, click here to preview the next CS2 font. Shift+click goes backward.");
 
             BeginInvoke((MethodInvoker)RefreshDefaultPreviewPolish);
-            AppLog.Info("Default preview polish initialized: GDI+ private-font rendering and click-to-cycle enabled.");
+            AppLog.Info("Default preview polish initialized: safe GDI+ private-font rendering and click-to-cycle enabled.");
+        }
+
+        private void customFontScaleButton_StartDialogPolish(object sender, MouseEventArgs e)
+        {
+            if (customScaleDialogStyleTimer == null)
+            {
+                customScaleDialogStyleTimer = new Timer { Interval = 25 };
+                customScaleDialogStyleTimer.Tick += customScaleDialogStyleTimer_Tick;
+            }
+
+            customScaleDialogStyleAttempts = 0;
+            customScaleDialogStyleTimer.Start();
+        }
+
+        private void customScaleDialogStyleTimer_Tick(object sender, EventArgs e)
+        {
+            customScaleDialogStyleAttempts++;
+            Form dialog = null;
+            foreach (Form openForm in Application.OpenForms)
+            {
+                if (openForm != this && openForm.Text == "Custom Font Scale")
+                {
+                    dialog = openForm;
+                    break;
+                }
+            }
+
+            if (dialog != null)
+            {
+                Button apply = null;
+                Button cancel = null;
+                foreach (Control control in dialog.Controls)
+                {
+                    Button button = control as Button;
+                    if (button == null) continue;
+                    if (button.DialogResult == DialogResult.OK) apply = button;
+                    else if (button.DialogResult == DialogResult.Cancel) cancel = button;
+                }
+
+                if (apply != null && cancel != null)
+                {
+                    apply.FlatStyle = FlatStyle.Popup;
+                    apply.BackColor = apply_button.BackColor;
+                    apply.ForeColor = apply_button.ForeColor;
+                    apply.Font = apply_button.Font;
+                    apply.UseVisualStyleBackColor = false;
+
+                    cancel.FlatStyle = FlatStyle.Popup;
+                    cancel.BackColor = restartCs2Button != null
+                        ? restartCs2Button.BackColor
+                        : Color.FromArgb(120, 190, 255);
+                    cancel.ForeColor = SystemColors.ControlText;
+                    cancel.Font = apply_button.Font;
+                    cancel.UseVisualStyleBackColor = false;
+
+                    apply.SetBounds(12, 98, 132, 30);
+                    cancel.SetBounds(156, 98, 132, 30);
+                    dialog.AcceptButton = apply;
+                    dialog.CancelButton = cancel;
+                    dialog.Invalidate(true);
+                }
+
+                customScaleDialogStyleTimer.Stop();
+                return;
+            }
+
+            if (customScaleDialogStyleAttempts >= 40)
+                customScaleDialogStyleTimer.Stop();
         }
 
         private void defaultPreviewPolish_RefreshLater(object sender, EventArgs e)
@@ -225,28 +321,29 @@ namespace CSGO_Font_Manager
             EnsureCs2PreviewChoices();
             if (cs2PreviewChoices.Count == 0)
             {
-                defaultPreviewScrollPanel.Visible = false;
-                fontPreview_richTextBox.Visible = true;
-                fontPreviewInfoLabel.Cursor = Cursors.Default;
-                fontPreviewInfoLabel.ForeColor = Color.Gray;
-                fontPreviewInfoLabel.Text = "CS2 Default \u2022 no bundled preview fonts found \u2022 " +
-                                            currentFontScale.ToString("0.00") + "x";
+                ShowNoDefaultPreview("CS2 Default \u2022 no bundled preview fonts found \u2022 " +
+                                     currentFontScale.ToString("0.00") + "x");
                 return;
             }
 
-            if (cs2PreviewChoiceIndex < 0 || cs2PreviewChoiceIndex >= cs2PreviewChoices.Count)
-                cs2PreviewChoiceIndex = 0;
+            if (cs2PreviewChoiceIndex < 0 || cs2PreviewChoiceIndex >= cs2PreviewChoices.Count ||
+                cs2PreviewChoices[cs2PreviewChoiceIndex].PreviewRejected)
+            {
+                int next = FindNextUsablePreviewIndex(cs2PreviewChoiceIndex, 1, true);
+                if (next < 0)
+                {
+                    ShowNoDefaultPreview("CS2 Default \u2022 no renderable preview faces \u2022 " +
+                                         currentFontScale.ToString("0.00") + "x");
+                    return;
+                }
+                cs2PreviewChoiceIndex = next;
+            }
 
             Cs2PreviewChoice choice = cs2PreviewChoices[cs2PreviewChoiceIndex];
             string error;
             if (!choice.EnsureLoaded(cs2PreviewTempDirectory, out error))
             {
-                AppLog.Warn("Could not load CS2 preview candidate '" + choice.CandidateName + "': " + error);
-                if (cs2PreviewChoices.Count > 1)
-                {
-                    cs2PreviewChoiceIndex = (cs2PreviewChoiceIndex + 1) % cs2PreviewChoices.Count;
-                    BeginInvoke((MethodInvoker)RefreshDefaultPreviewPolish);
-                }
+                RejectCurrentPreviewChoice(choice, "load failed: " + error);
                 return;
             }
 
@@ -255,7 +352,15 @@ namespace CSGO_Font_Manager
             Font rendered = CreateUsableFont(choice.Family, pointSize);
             if (rendered == null)
             {
-                AppLog.Warn("No usable GDI+ style for CS2 preview candidate '" + choice.CandidateName + "'.");
+                RejectCurrentPreviewChoice(choice, "no usable GDI+ style");
+                return;
+            }
+
+            string renderError;
+            if (!CanSafelyRenderPreviewFont(rendered, out renderError))
+            {
+                rendered.Dispose();
+                RejectCurrentPreviewChoice(choice, "GDI+ rejected DrawString: " + renderError);
                 return;
             }
 
@@ -263,7 +368,13 @@ namespace CSGO_Font_Manager
             defaultPreviewRenderedFont = rendered;
             defaultPreviewTextLabel.Font = defaultPreviewRenderedFont;
             defaultPreviewTextLabel.Text = FontPreviewText;
-            if (previous != null && !ReferenceEquals(previous, defaultPreviewRenderedFont)) previous.Dispose();
+
+            // Do not dispose the previous Font immediately. WinForms may still have a
+            // queued paint using it, which turns the Label into the red-X error surface.
+            // Retain old preview Fonts for the short lifetime of the app and dispose them
+            // together when the form closes.
+            if (previous != null && !ReferenceEquals(previous, defaultPreviewRenderedFont))
+                retiredPreviewFonts.Add(previous);
 
             string faceName = choice.Family.Name;
             string fileName = Path.GetFileNameWithoutExtension(choice.CandidateName);
@@ -274,6 +385,8 @@ namespace CSGO_Font_Manager
             defaultPreviewScrollPanel.Visible = true;
             defaultPreviewScrollPanel.BringToFront();
             defaultPreviewScrollPanel.AutoScrollPosition = new Point(0, 0);
+            defaultPreviewTextLabel.Invalidate();
+            defaultPreviewScrollPanel.Invalidate(true);
 
             fontPreviewInfoLabel.Cursor = Cursors.Hand;
             fontPreviewInfoLabel.ForeColor = Color.MediumSpringGreen;
@@ -281,6 +394,76 @@ namespace CSGO_Font_Manager
                                         currentFontScale.ToString("0.00") + "x \u2022 " +
                                         (cs2PreviewChoiceIndex + 1) + "/" + cs2PreviewChoices.Count +
                                         (currentFontScaleIsCustom ? " \u2022 Custom" : string.Empty);
+        }
+
+        private static bool CanSafelyRenderPreviewFont(Font font, out string error)
+        {
+            error = null;
+            try
+            {
+                using (Bitmap bitmap = new Bitmap(320, 96))
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                using (Brush brush = new SolidBrush(Color.White))
+                {
+                    graphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                    graphics.DrawString("The quick brown fox 0123456789", font, brush,
+                        new RectangleF(0, 0, bitmap.Width, bitmap.Height));
+                }
+                return true;
+            }
+            catch (Exception exception)
+            {
+                error = exception.Message;
+                return false;
+            }
+        }
+
+        private void RejectCurrentPreviewChoice(Cs2PreviewChoice choice, string reason)
+        {
+            choice.PreviewRejected = true;
+            choice.PreviewRejectReason = reason;
+            AppLog.Warn("Skipping CS2 preview candidate '" + choice.CandidateName + "': " + reason);
+
+            int next = FindNextUsablePreviewIndex(cs2PreviewChoiceIndex, 1, false);
+            if (next < 0)
+            {
+                ShowNoDefaultPreview("CS2 Default \u2022 no renderable preview faces \u2022 " +
+                                     currentFontScale.ToString("0.00") + "x");
+                return;
+            }
+
+            cs2PreviewChoiceIndex = next;
+            if (!IsDisposed && IsHandleCreated)
+                BeginInvoke((MethodInvoker)RefreshDefaultPreviewPolish);
+        }
+
+        private int FindNextUsablePreviewIndex(int startIndex, int direction, bool includeStart)
+        {
+            if (cs2PreviewChoices.Count == 0) return -1;
+            if (direction == 0) direction = 1;
+
+            int normalizedStart = startIndex;
+            if (normalizedStart < 0 || normalizedStart >= cs2PreviewChoices.Count)
+                normalizedStart = 0;
+
+            int firstOffset = includeStart ? 0 : 1;
+            for (int offset = firstOffset; offset < cs2PreviewChoices.Count + firstOffset; offset++)
+            {
+                int index = normalizedStart + direction * offset;
+                while (index < 0) index += cs2PreviewChoices.Count;
+                index %= cs2PreviewChoices.Count;
+                if (!cs2PreviewChoices[index].PreviewRejected) return index;
+            }
+            return -1;
+        }
+
+        private void ShowNoDefaultPreview(string message)
+        {
+            defaultPreviewScrollPanel.Visible = false;
+            fontPreview_richTextBox.Visible = true;
+            fontPreviewInfoLabel.Cursor = Cursors.Default;
+            fontPreviewInfoLabel.ForeColor = Color.Gray;
+            fontPreviewInfoLabel.Text = message;
         }
 
         private void fontPreviewInfoLabel_CycleCs2Preview(object sender, EventArgs e)
@@ -292,8 +475,10 @@ namespace CSGO_Font_Manager
             if (cs2PreviewChoices.Count <= 1) return;
 
             int direction = (ModifierKeys & Keys.Shift) == Keys.Shift ? -1 : 1;
-            cs2PreviewChoiceIndex = (cs2PreviewChoiceIndex + direction + cs2PreviewChoices.Count) %
-                                    cs2PreviewChoices.Count;
+            int next = FindNextUsablePreviewIndex(cs2PreviewChoiceIndex, direction, false);
+            if (next < 0) return;
+
+            cs2PreviewChoiceIndex = next;
             AppLog.Info("CS2 default preview cycled to " + (cs2PreviewChoiceIndex + 1) + "/" +
                         cs2PreviewChoices.Count + ": " + cs2PreviewChoices[cs2PreviewChoiceIndex].CandidateName);
             RefreshDefaultPreviewPolish();
@@ -396,12 +581,26 @@ namespace CSGO_Font_Manager
 
         private void defaultPreviewPolish_FormClosed(object sender, FormClosedEventArgs e)
         {
-            ResetCs2PreviewChoices();
+            if (customScaleDialogStyleTimer != null)
+            {
+                customScaleDialogStyleTimer.Stop();
+                customScaleDialogStyleTimer.Dispose();
+                customScaleDialogStyleTimer = null;
+            }
+
             if (defaultPreviewRenderedFont != null)
             {
                 defaultPreviewRenderedFont.Dispose();
                 defaultPreviewRenderedFont = null;
             }
+
+            foreach (Font retired in retiredPreviewFonts)
+            {
+                try { retired.Dispose(); } catch { }
+            }
+            retiredPreviewFonts.Clear();
+
+            ResetCs2PreviewChoices();
         }
 
         private void ResetCs2PreviewChoices()
