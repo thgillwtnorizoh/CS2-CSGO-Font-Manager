@@ -30,12 +30,21 @@ namespace CSGO_Font_Manager
                 // OnLoad has already installed the proven CS2 apply handler. Wrap it only after that point.
                 form.apply_button.Click -= form.apply_button_cs2_Click;
                 form.apply_button.Click += form.apply_button_cs2_enhanced_Click;
-                AppLog.Info("Enhanced CS2 apply wrapper installed.");
+
+                // Replace the compatibility guard with the metadata-first runtime importer.
+                form.listBox1.DragDrop -= form.fontLibrary_DragDrop_cs2Guard;
+                form.listBox1.DragDrop += form.fontLibrary_DragDrop_cs2Modern;
+
+                AppLog.Info("Enhanced CS2 apply wrapper and modern import pipeline installed.");
             }
         }
 
         private void apply_button_cs2_enhanced_Click(object sender, EventArgs e)
         {
+            string selection = listBox1.SelectedItem == null ? "<none>" : listBox1.SelectedItem.ToString();
+            AppLog.Info("Apply button pressed. View=" + CurrentFormView + ", selection=" + selection +
+                        ", size=" + getCSGOPixelSize().ToString("0.00", CultureInfo.InvariantCulture));
+
             if (CurrentFormView != FormViews.Main || listBox1.SelectedItem == null ||
                 listBox1.SelectedItem.ToString() != DefaultFontName)
             {
