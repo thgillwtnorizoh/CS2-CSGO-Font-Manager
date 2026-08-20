@@ -86,6 +86,7 @@
     <Compile Include="CS2Enhancements.cs" />
     <Compile Include="CS2ImportPipeline.cs" />
     <Compile Include="FontEncodingInspector.cs" />
+    <Compile Include="ScalableFontUi.cs" />
     <Compile Include="FileTemplates.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
