@@ -82,6 +82,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="CS2Compatibility.cs" />
+    <Compile Include="CS2EnhancementBootstrap.cs" />
     <Compile Include="CS2Enhancements.cs" />
     <Compile Include="FontEncodingInspector.cs" />
     <Compile Include="FileTemplates.cs" />
