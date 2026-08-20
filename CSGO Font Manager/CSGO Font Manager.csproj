@@ -85,8 +85,10 @@
     <Compile Include="CS2EnhancementBootstrap.cs" />
     <Compile Include="CS2Enhancements.cs" />
     <Compile Include="CS2ImportPipeline.cs" />
+    <Compile Include="DefaultFontPreviewEnhancement.cs" />
     <Compile Include="FontEncodingInspector.cs" />
     <Compile Include="ScalableFontUi.cs" />
+    <Compile Include="UiFontPackageReader.cs" />
     <Compile Include="FileTemplates.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
