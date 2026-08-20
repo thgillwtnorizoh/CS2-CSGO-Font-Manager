@@ -2,7 +2,7 @@ name: Build Font Manager
 
 on:
   push:
-    branches: [ master, feature/scalable-font-ui ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
   workflow_dispatch:
