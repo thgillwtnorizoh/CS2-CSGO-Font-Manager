@@ -86,6 +86,7 @@
     <Compile Include="CS2Enhancements.cs" />
     <Compile Include="CS2ImportPipeline.cs" />
     <Compile Include="DefaultFontPreviewEnhancement.cs" />
+    <Compile Include="DefaultPreviewPolish.cs" />
     <Compile Include="FontEncodingInspector.cs" />
     <Compile Include="ScalableFontUi.cs" />
     <Compile Include="UiFontPackageReader.cs" />
