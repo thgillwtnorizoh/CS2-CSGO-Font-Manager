@@ -84,6 +84,7 @@
     <Compile Include="CS2Compatibility.cs" />
     <Compile Include="CS2EnhancementBootstrap.cs" />
     <Compile Include="CS2Enhancements.cs" />
+    <Compile Include="CS2ImportPipeline.cs" />
     <Compile Include="FontEncodingInspector.cs" />
     <Compile Include="FileTemplates.cs" />
     <Compile Include="Form1.cs">
