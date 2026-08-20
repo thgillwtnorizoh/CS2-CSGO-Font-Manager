@@ -34,6 +34,14 @@ namespace CSGO_Font_Manager
                     string filename = rawfilename;
                     if (extension != "") filename = rawfilename.Replace(extension,"");
 
+                    // Use the font's real internal family name for direct font imports.
+                    // Filenames are not reliable identifiers (for example WINGDNG3.TTF is "Wingdings 3").
+                    if (IsFontExtension(extension))
+                    {
+                        string internalFamilyName = GetFontFamilyNameFromFile(filepath);
+                        if (!string.IsNullOrWhiteSpace(internalFamilyName)) filename = internalFamilyName;
+                    }
+
                     string fontpath = null;
 
                     string fileFontDirectory = FontsFolder + sanitizeFilename(filename) + @"\";
@@ -190,6 +198,24 @@ namespace CSGO_Font_Manager
             extension = extension.ToLower();
             return extension == ".ttf" || extension == ".tte" || extension == ".otf" ||
                    extension == ".woff" || extension == ".woff2" || extension == ".eot" || extension == ".fon";
+        }
+
+        private static string GetFontFamilyNameFromFile(string fontFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(fontFilePath) || !File.Exists(fontFilePath)) return null;
+
+            try
+            {
+                using (var collection = new System.Drawing.Text.PrivateFontCollection())
+                {
+                    collection.AddFontFile(fontFilePath);
+                    return collection.Families.Length > 0 ? collection.Families[0].Name : null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void setupFontsDirectory(string fontsFile, string fontname, string fontfilename)
