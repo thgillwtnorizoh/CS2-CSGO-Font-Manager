@@ -113,6 +113,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </Compile>
     <Compile Include="Settings.cs" />
+    <Compile Include="DualGameHotfix.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
