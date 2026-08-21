@@ -45,7 +45,10 @@ namespace CSGO_Font_Manager
 
                         // PrivateFontCollection fonts need GDI+ rendering in WinForms.
                         form.gameHint.UseCompatibleTextRendering = true;
-                        form.gameHint.Font = new Font(family, 9f, FontStyle.Regular, GraphicsUnit.Point);
+
+                        // Learning Curve's handwriting is visually much smaller than Segoe Script
+                        // at the same nominal point size. Use 18pt so the switch hint stays legible.
+                        form.gameHint.Font = new Font(family, 18f, FontStyle.Regular, GraphicsUnit.Point);
 
                         if (oldFont != null) oldFont.Dispose();
 
@@ -53,7 +56,7 @@ namespace CSGO_Font_Manager
                         form.gameHint.AutoSize = true;
                         form.gameHint.Invalidate();
 
-                        AppLog.Info("Game-switch hint font loaded from embedded Learning Curve resource. Family=" + form.gameHint.Font.FontFamily.Name + ", bytes=" + learningCurveFontBytes.Length + ".");
+                        AppLog.Info("Game-switch hint font loaded from embedded Learning Curve resource. Family=" + form.gameHint.Font.FontFamily.Name + ", size=" + form.gameHint.Font.SizeInPoints.ToString("0.##") + "pt, bytes=" + learningCurveFontBytes.Length + ".");
                     }
                     else
                     {
