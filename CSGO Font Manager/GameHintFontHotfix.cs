@@ -43,21 +43,17 @@ namespace CSGO_Font_Manager
                     {
                         Font oldFont = form.gameHint.Font;
 
-                        // WinForms Label normally uses GDI TextRenderer. GDI does not reliably
-                        // render fonts that exist only inside a PrivateFontCollection and can
-                        // silently substitute the original Segoe Script face. Force the label
-                        // onto the GDI+ path, which understands our private in-memory font.
+                        // PrivateFontCollection fonts need GDI+ rendering in WinForms.
                         form.gameHint.UseCompatibleTextRendering = true;
                         form.gameHint.Font = new Font(family, 9f, FontStyle.Regular, GraphicsUnit.Point);
 
                         if (oldFont != null) oldFont.Dispose();
 
-                        // Re-measure the AutoSize label after switching renderer/font.
                         form.gameHint.AutoSize = false;
                         form.gameHint.AutoSize = true;
                         form.gameHint.Invalidate();
 
-                        AppLog.Info("Game-switch hint font loaded from embedded Learning Curve resource; GDI+ compatible text rendering enabled. Family=" + form.gameHint.Font.FontFamily.Name + ".");
+                        AppLog.Info("Game-switch hint font loaded from embedded Learning Curve resource. Family=" + form.gameHint.Font.FontFamily.Name + ", bytes=" + learningCurveFontBytes.Length + ".");
                     }
                     else
                     {
@@ -80,28 +76,36 @@ namespace CSGO_Font_Manager
             learningCurveLoadAttempted = true;
 
             Assembly assembly = Assembly.GetExecutingAssembly();
-            StringBuilder encoded = new StringBuilder(56000);
 
-            for (int i = 0; i < 7; i++)
+            // The embedded payload was split AFTER Base64 encoding each binary chunk.
+            // Concatenating the Base64 text first corrupts bytes at chunk boundaries.
+            // Decode each chunk independently, then join the original compressed bytes.
+            using (MemoryStream compressedStream = new MemoryStream())
             {
-                string resourceName = "LearningCurve.b64." + i.ToString("00");
-                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                for (int i = 0; i < 7; i++)
                 {
-                    if (stream == null)
-                        throw new InvalidDataException("Missing embedded font resource: " + resourceName);
+                    string resourceName = "LearningCurve.b64." + i.ToString("00");
+                    using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                    {
+                        if (stream == null)
+                            throw new InvalidDataException("Missing embedded font resource: " + resourceName);
 
-                    using (StreamReader reader = new StreamReader(stream, Encoding.ASCII, false))
-                        encoded.Append(reader.ReadToEnd());
+                        string encodedChunk;
+                        using (StreamReader reader = new StreamReader(stream, Encoding.ASCII, false))
+                            encodedChunk = reader.ReadToEnd().Trim();
+
+                        byte[] compressedChunk = Convert.FromBase64String(encodedChunk);
+                        compressedStream.Write(compressedChunk, 0, compressedChunk.Length);
+                    }
                 }
-            }
 
-            byte[] compressed = Convert.FromBase64String(encoded.ToString());
-            using (MemoryStream input = new MemoryStream(compressed, false))
-            using (GZipStream gzip = new GZipStream(input, CompressionMode.Decompress))
-            using (MemoryStream output = new MemoryStream())
-            {
-                gzip.CopyTo(output);
-                learningCurveFontBytes = output.ToArray();
+                compressedStream.Position = 0;
+                using (GZipStream gzip = new GZipStream(compressedStream, CompressionMode.Decompress, true))
+                using (MemoryStream output = new MemoryStream())
+                {
+                    gzip.CopyTo(output);
+                    learningCurveFontBytes = output.ToArray();
+                }
             }
 
             if (learningCurveFontBytes.Length == 0)
