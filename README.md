@@ -1,10 +1,10 @@
 ![Font Manager Logo](https://github.com/WilliamRagstad/Font-Manager/blob/master/CSGO%20Font%20Manager/Resources/fontmanager.png?raw=true)
 
 <div align=center>
- <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/thgillwtnorizoh/Font-Manager">
- <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/thgillwtnorizoh/Font-Manager/total">
- <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/thgillwtnorizoh/Font-Manager">
- <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/thgillwtnorizoh/Font-Manager?label=latest%20release">
+ <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/thgillwtnorizoh/CS2-CSGO-Font-Manager">
+ <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/thgillwtnorizoh/CS2-CSGO-Font-Manager/total">
+ <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/thgillwtnorizoh/CS2-CSGO-Font-Manager">
+ <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/thgillwtnorizoh/CS2-CSGO-Font-Manager?label=latest%20release">
 </div>
 
 
