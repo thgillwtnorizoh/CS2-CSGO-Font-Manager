@@ -66,6 +66,7 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -122,6 +123,27 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.00.txt">
+      <LogicalName>LearningCurve.b64.00</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.01.txt">
+      <LogicalName>LearningCurve.b64.01</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.02.txt">
+      <LogicalName>LearningCurve.b64.02</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.03.txt">
+      <LogicalName>LearningCurve.b64.03</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.04.txt">
+      <LogicalName>LearningCurve.b64.04</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.05.txt">
+      <LogicalName>LearningCurve.b64.05</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\LearningCurve.b64.06.txt">
+      <LogicalName>LearningCurve.b64.06</LogicalName>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
