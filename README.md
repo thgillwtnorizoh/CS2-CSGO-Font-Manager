@@ -113,5 +113,5 @@ Visit our [Subreddit](https://www.reddit.com/r/csgoFontManager/).
 
 ### Do you have feedback?
 
-Submit it [here](https://github.com/thgillwtnorizoh/Font-Manager/issues)!
+Submit it [here](https://github.com/thgillwtnorizoh/CS2-CSGO-Font-Manager/issues)!
 
