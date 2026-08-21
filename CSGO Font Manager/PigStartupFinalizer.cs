@@ -38,6 +38,7 @@ namespace CSGO_Font_Manager
                 return;
 
             pigStartupFinalizerQueued = true;
+            InstallCurrentRepositoryLinks();
 
             // The older startup modules use nested BeginInvoke calls. Queue two layers of our own
             // so their pending first-frame geometry work drains before the authoritative layout runs.
