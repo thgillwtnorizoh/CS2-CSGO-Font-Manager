@@ -93,6 +93,7 @@
     <Compile Include="SpecificFontSettings.cs" />
     <Compile Include="SpecificFontSettingsPreviewBridge.cs" />
     <Compile Include="PigUiFixesV2.cs" />
+    <Compile Include="PigStartupFinalizer.cs" />
     <Compile Include="UiFontPackageReader.cs" />
     <Compile Include="FileTemplates.cs" />
     <Compile Include="Form1.cs">
