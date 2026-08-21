@@ -108,8 +108,8 @@ namespace CSGO_Font_Manager
                 }
             }
 
-            if (learningCurveFontBytes.Length == 0)
-                throw new InvalidDataException("Embedded Learning Curve decompressed to an empty font.");
+            if (learningCurveFontBytes.Length != 99196)
+                throw new InvalidDataException("Embedded Learning Curve size mismatch. Expected 99196 bytes, got " + learningCurveFontBytes.Length + ".");
 
             learningCurveFontHandle = GCHandle.Alloc(learningCurveFontBytes, GCHandleType.Pinned);
             try
