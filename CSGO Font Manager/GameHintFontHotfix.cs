@@ -42,9 +42,22 @@ namespace CSGO_Font_Manager
                     if (family != null)
                     {
                         Font oldFont = form.gameHint.Font;
+
+                        // WinForms Label normally uses GDI TextRenderer. GDI does not reliably
+                        // render fonts that exist only inside a PrivateFontCollection and can
+                        // silently substitute the original Segoe Script face. Force the label
+                        // onto the GDI+ path, which understands our private in-memory font.
+                        form.gameHint.UseCompatibleTextRendering = true;
                         form.gameHint.Font = new Font(family, 9f, FontStyle.Regular, GraphicsUnit.Point);
+
                         if (oldFont != null) oldFont.Dispose();
-                        AppLog.Info("Game-switch hint font loaded from embedded Learning Curve resource.");
+
+                        // Re-measure the AutoSize label after switching renderer/font.
+                        form.gameHint.AutoSize = false;
+                        form.gameHint.AutoSize = true;
+                        form.gameHint.Invalidate();
+
+                        AppLog.Info("Game-switch hint font loaded from embedded Learning Curve resource; GDI+ compatible text rendering enabled. Family=" + form.gameHint.Font.FontFamily.Name + ".");
                     }
                     else
                     {
