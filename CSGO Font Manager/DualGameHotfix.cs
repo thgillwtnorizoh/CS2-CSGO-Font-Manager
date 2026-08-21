@@ -114,8 +114,8 @@ namespace CSGO_Font_Manager
                         bool closeRequested = process.CloseMainWindow();
                         AppLog.Info("CS:GO CloseMainWindow PID " + process.Id + " returned " + closeRequested + ".");
 
-                        // Source 1/fullscreen CS:GO can expose no useful Process.MainWindowHandle.
-                        // Enumerate every top-level window owned by the process and send WM_CLOSE directly.
+                        // Source 1 fullscreen can leave Process.MainWindowHandle unusable, so also
+                        // send WM_CLOSE to every top-level window actually owned by csgo.exe.
                         SendCloseToProcessWindows(process.Id);
                     }
                     catch (Exception exception)
