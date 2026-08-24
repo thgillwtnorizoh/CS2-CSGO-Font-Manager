@@ -46,12 +46,15 @@ namespace CSGO_Font_Manager
             specificSettingTabButton.Click += specificSettingsStateHotfix_TabClicked;
             title_label.Click += specificSettingsStateHotfix_GameClicked;
 
-            ReplaceSpecificApplyButtonWithStateSafeVersion();
-            SyncActiveSpecificControlsFromSettings();
+            // Keep the original button instance. Replacing it while the Specific panel is hidden
+            // copies Visible=false and can leave the Apply button permanently invisible.
+            specificApplyButton.Visible = true;
+
+            FastSyncActiveSpecificControlsFromSettings();
             specificSettingsStateHotfixLastGame = GameName();
             ApplySpecificTabContrast();
 
-            AppLog.Info("Specific settings state hotfix installed: cached rows rehydrate from saved state, apply captures live controls, and active-tab contrast is enforced.");
+            AppLog.Info("Specific settings state hotfix v2 installed: cached rows use fast selection sync, apply button preserved, and active-tab contrast enforced.");
         }
 
         private void MaintainSpecificSettingsStateHotfix()
@@ -60,8 +63,13 @@ namespace CSGO_Font_Manager
             if (!string.Equals(game, specificSettingsStateHotfixLastGame, StringComparison.Ordinal))
             {
                 specificSettingsStateHotfixLastGame = game;
-                SyncActiveSpecificControlsFromSettings();
+                FastSyncActiveSpecificControlsFromSettings();
             }
+
+            // LayoutSpecificTab positions this control but does not set Visible=true.
+            // Keep the child visible; its parent panel decides whether Specific Setting is shown.
+            if (specificApplyButton != null && !specificApplyButton.IsDisposed)
+                specificApplyButton.Visible = true;
 
             ApplySpecificTabContrast();
         }
@@ -72,7 +80,7 @@ namespace CSGO_Font_Manager
             BeginInvoke((MethodInvoker)delegate
             {
                 if (specificSettingsTabActive)
-                    SyncActiveSpecificControlsFromSettings();
+                    FastSyncActiveSpecificControlsFromSettings();
                 ApplySpecificTabContrast();
             });
         }
@@ -83,96 +91,61 @@ namespace CSGO_Font_Manager
             BeginInvoke((MethodInvoker)delegate
             {
                 specificSettingsStateHotfixLastGame = GameName();
-                SyncActiveSpecificControlsFromSettings();
+                FastSyncActiveSpecificControlsFromSettings();
                 ApplySpecificTabContrast();
             });
         }
 
-        private void ReplaceSpecificApplyButtonWithStateSafeVersion()
-        {
-            Button oldButton = specificApplyButton;
-            Button replacement = new Button
-            {
-                Name = oldButton.Name,
-                Text = oldButton.Text,
-                Bounds = oldButton.Bounds,
-                Anchor = oldButton.Anchor,
-                Dock = oldButton.Dock,
-                FlatStyle = oldButton.FlatStyle,
-                BackColor = oldButton.BackColor,
-                ForeColor = oldButton.ForeColor,
-                Font = oldButton.Font,
-                UseVisualStyleBackColor = false,
-                Enabled = oldButton.Enabled,
-                Visible = oldButton.Visible,
-                TabIndex = oldButton.TabIndex,
-                TabStop = oldButton.TabStop
-            };
-
-            replacement.Click += specificSettingsStateHotfix_ApplyClicked;
-
-            specificSettingsPanel.Controls.Remove(oldButton);
-            oldButton.Dispose();
-            specificApplyButton = replacement;
-            specificSettingsPanel.Controls.Add(specificApplyButton);
-            specificApplyButton.BringToFront();
-        }
-
-        private void specificSettingsStateHotfix_ApplyClicked(object sender, EventArgs e)
-        {
-            CaptureActiveSpecificControlsToSettings();
-            SaveNow();
-
-            if (gameTarget == GameTarget.CS2)
-                ApplySpecificFontSettings();
-            else
-                ApplyCsgoSpecific();
-        }
-
-        private void SyncActiveSpecificControlsFromSettings()
+        private void FastSyncActiveSpecificControlsFromSettings()
         {
             if (Settings == null) return;
 
+            FlowLayoutPanel flow;
+            Dictionary<string, string> assignments;
+
             if (gameTarget == GameTarget.CS2)
             {
-                FlowLayoutPanel flow = cs2SpecificFlow ?? specificFamilyFlow;
-                if (flow == null) return;
-
+                flow = cs2SpecificFlow ?? specificFamilyFlow;
                 if (Settings.SpecificFontAssignments == null)
                     Settings.SpecificFontAssignments = new Dictionary<string, string>();
-
-                foreach (Control row in flow.Controls)
-                {
-                    FamilySpec spec = row.Tag as FamilySpec;
-                    if (spec == null) continue;
-
-                    ComboBox combo = FindSpecificCombo(row, spec.Family);
-                    if (combo == null) continue;
-
-                    PopulateSpecificFamilyCombo(combo, GetSavedSpecificAssignment(spec.Family));
-                }
+                assignments = Settings.SpecificFontAssignments;
             }
             else
             {
                 if (csgoSpecificFlow == null)
                     MakeCsgoFlow();
-                if (csgoSpecificFlow == null) return;
-
+                flow = csgoSpecificFlow;
                 if (Settings.CsgoSpecificFontAssignments == null)
                     Settings.CsgoSpecificFontAssignments = new Dictionary<string, string>();
+                assignments = Settings.CsgoSpecificFontAssignments;
+            }
 
-                foreach (Control row in csgoSpecificFlow.Controls)
+            if (flow == null) return;
+
+            int changed = 0;
+            foreach (Control row in flow.Controls)
+            {
+                FamilySpec spec = row.Tag as FamilySpec;
+                if (spec == null) continue;
+
+                ComboBox combo = FindSpecificCombo(row, spec.Family);
+                if (combo == null) continue;
+
+                string desired;
+                if (!assignments.TryGetValue(spec.Family, out desired) || string.IsNullOrWhiteSpace(desired))
+                    desired = SpecificUseGeneral;
+
+                string current = combo.SelectedItem == null ? null : combo.SelectedItem.ToString();
+                if (string.Equals(current, desired, StringComparison.Ordinal))
+                    continue;
+
+                // Cached controls already contain their dropdown items from creation time.
+                // Do not call PopulateSpecificFamilyCombo/FillCsgoCombo here: those rescan every
+                // imported font on disk and make a cached render slower than rebuilding it.
+                if (combo.Items.Contains(desired))
                 {
-                    FamilySpec spec = row.Tag as FamilySpec;
-                    if (spec == null) continue;
-
-                    ComboBox combo = FindSpecificCombo(row, spec.Family);
-                    if (combo == null) continue;
-
-                    // FillCsgoCombo normally preserves the current selection first. Clear it so
-                    // the saved dictionary, rather than a stale cached control, is authoritative.
-                    combo.SelectedItem = null;
-                    FillCsgoCombo(combo);
+                    combo.SelectedItem = desired;
+                    changed++;
                 }
             }
 
@@ -183,7 +156,7 @@ namespace CSGO_Font_Manager
                 ForceSpecificFlowLayout();
             }
 
-            AppLog.Info("Specific setting controls rehydrated from " + GameName() + " saved assignments.");
+            AppLog.Info("Fast-synced cached " + GameName() + " specific controls from saved assignments; changed=" + changed + ".");
         }
 
         private void CaptureActiveSpecificControlsToSettings()
@@ -251,7 +224,6 @@ namespace CSGO_Font_Manager
 
         private static Color GetReadableTextColor(Color background)
         {
-            // ITU-R BT.601 luma is sufficient for choosing black/white UI text.
             int luma = (background.R * 299 + background.G * 587 + background.B * 114) / 1000;
             return luma >= 145 ? Color.Black : Color.White;
         }
