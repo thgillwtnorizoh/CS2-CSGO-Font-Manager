@@ -117,6 +117,7 @@
     <Compile Include="DualGameHotfix.cs" />
     <Compile Include="GameHintFontHotfix.cs" />
     <Compile Include="SpecificSettingsStateHotfix.cs" />
+    <Compile Include="Version401Hotfix.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
