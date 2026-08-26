@@ -7,98 +7,45 @@ namespace CSGO_Font_Manager
 {
     public partial class Form1
     {
-        private static readonly bool SpecificSettingsStateHotfixBootstrapRegistered = RegisterSpecificSettingsStateHotfixBootstrap();
+        private bool specificSettingsStateInitialized;
 
-        private bool specificSettingsStateHotfixInstalled;
-        private string specificSettingsStateHotfixLastGame;
-
-        private static bool RegisterSpecificSettingsStateHotfixBootstrap()
+        private void InitializeSpecificSettingsState()
         {
-            Application.Idle += SpecificSettingsStateHotfixOnIdle;
-            return true;
-        }
+            if (specificSettingsStateInitialized)
+                return;
+            specificSettingsStateInitialized = true;
 
-        private static void SpecificSettingsStateHotfixOnIdle(object sender, EventArgs e)
-        {
-            foreach (Form openForm in Application.OpenForms)
-            {
-                Form1 form = openForm as Form1;
-                if (form == null || form.IsDisposed)
-                    continue;
-                if (!form.dualReady || !form.pigUiV2Initialized ||
-                    form.generalSettingTabButton == null || form.specificSettingTabButton == null ||
-                    form.specificApplyButton == null || form.specificSettingsPanel == null)
-                    continue;
-
-                if (!form.specificSettingsStateHotfixInstalled)
-                    form.InstallSpecificSettingsStateHotfix();
-
-                form.MaintainSpecificSettingsStateHotfix();
-            }
-        }
-
-        private void InstallSpecificSettingsStateHotfix()
-        {
-            if (specificSettingsStateHotfixInstalled) return;
-            specificSettingsStateHotfixInstalled = true;
-
-            generalSettingTabButton.Click += specificSettingsStateHotfix_TabClicked;
-            specificSettingTabButton.Click += specificSettingsStateHotfix_TabClicked;
-            title_label.Click += specificSettingsStateHotfix_GameClicked;
-
-            // Keep the original button instance. Replacing it while the Specific panel is hidden
-            // copies Visible=false and can leave the Apply button permanently invisible.
+            // Keep the designer/runtime-created button. The old hotfix replaced it while its parent
+            // was hidden, which copied Visible=false and produced the disappearing Apply button bug.
             specificApplyButton.Visible = true;
 
-            FastSyncActiveSpecificControlsFromSettings();
-            specificSettingsStateHotfixLastGame = GameName();
+            generalSettingTabButton.Click += SpecificSettingsTab_Click;
+            specificSettingTabButton.Click += SpecificSettingsTab_Click;
+
+            SyncActiveSpecificControlsFromSettingsFast();
             ApplySpecificTabContrast();
 
-            AppLog.Info("Specific settings state hotfix v2 installed: cached rows use fast selection sync, apply button preserved, and active-tab contrast enforced.");
+            AppLog.Info("Specific settings state initialized: saved assignments are authoritative and cached controls are view-only.");
         }
 
-        private void MaintainSpecificSettingsStateHotfix()
+        private void SpecificSettingsTab_Click(object sender, EventArgs e)
         {
-            string game = GameName();
-            if (!string.Equals(game, specificSettingsStateHotfixLastGame, StringComparison.Ordinal))
-            {
-                specificSettingsStateHotfixLastGame = game;
-                FastSyncActiveSpecificControlsFromSettings();
-            }
+            if (IsDisposed || !IsHandleCreated)
+                return;
 
-            // LayoutSpecificTab positions this control but does not set Visible=true.
-            // Keep the child visible; its parent panel decides whether Specific Setting is shown.
-            if (specificApplyButton != null && !specificApplyButton.IsDisposed)
-                specificApplyButton.Visible = true;
-
-            ApplySpecificTabContrast();
-        }
-
-        private void specificSettingsStateHotfix_TabClicked(object sender, EventArgs e)
-        {
-            if (IsDisposed || !IsHandleCreated) return;
             BeginInvoke((MethodInvoker)delegate
             {
                 if (specificSettingsTabActive)
-                    FastSyncActiveSpecificControlsFromSettings();
+                    SyncActiveSpecificControlsFromSettingsFast();
+                specificApplyButton.Visible = true;
                 ApplySpecificTabContrast();
             });
         }
 
-        private void specificSettingsStateHotfix_GameClicked(object sender, EventArgs e)
+        private void SyncActiveSpecificControlsFromSettingsFast()
         {
-            if (IsDisposed || !IsHandleCreated) return;
-            BeginInvoke((MethodInvoker)delegate
-            {
-                specificSettingsStateHotfixLastGame = GameName();
-                FastSyncActiveSpecificControlsFromSettings();
-                ApplySpecificTabContrast();
-            });
-        }
-
-        private void FastSyncActiveSpecificControlsFromSettings()
-        {
-            if (Settings == null) return;
+            if (Settings == null)
+                return;
 
             FlowLayoutPanel flow;
             Dictionary<string, string> assignments;
@@ -120,16 +67,19 @@ namespace CSGO_Font_Manager
                 assignments = Settings.CsgoSpecificFontAssignments;
             }
 
-            if (flow == null) return;
+            if (flow == null)
+                return;
 
             int changed = 0;
             foreach (Control row in flow.Controls)
             {
                 FamilySpec spec = row.Tag as FamilySpec;
-                if (spec == null) continue;
+                if (spec == null)
+                    continue;
 
                 ComboBox combo = FindSpecificCombo(row, spec.Family);
-                if (combo == null) continue;
+                if (combo == null)
+                    continue;
 
                 string desired;
                 if (!assignments.TryGetValue(spec.Family, out desired) || string.IsNullOrWhiteSpace(desired))
@@ -139,9 +89,8 @@ namespace CSGO_Font_Manager
                 if (string.Equals(current, desired, StringComparison.Ordinal))
                     continue;
 
-                // Cached controls already contain their dropdown items from creation time.
-                // Do not call PopulateSpecificFamilyCombo/FillCsgoCombo here: those rescan every
-                // imported font on disk and make a cached render slower than rebuilding it.
+                // Cached controls already own a populated item list. Changing only SelectedItem keeps
+                // the cache cheap; rebuilding the combo here would rescan the font library for every row.
                 if (combo.Items.Contains(desired))
                 {
                     combo.SelectedItem = desired;
@@ -161,7 +110,8 @@ namespace CSGO_Font_Manager
 
         private void CaptureActiveSpecificControlsToSettings()
         {
-            if (Settings == null) return;
+            if (Settings == null)
+                return;
 
             FlowLayoutPanel flow;
             Dictionary<string, string> assignments;
@@ -183,16 +133,19 @@ namespace CSGO_Font_Manager
                 assignments = Settings.CsgoSpecificFontAssignments;
             }
 
-            if (flow == null) return;
+            if (flow == null)
+                return;
 
             int captured = 0;
             foreach (Control row in flow.Controls)
             {
                 FamilySpec spec = row.Tag as FamilySpec;
-                if (spec == null) continue;
+                if (spec == null)
+                    continue;
 
                 ComboBox combo = FindSpecificCombo(row, spec.Family);
-                if (combo == null || combo.SelectedItem == null) continue;
+                if (combo == null || combo.SelectedItem == null)
+                    continue;
 
                 assignments[spec.Family] = combo.SelectedItem.ToString();
                 captured++;
@@ -203,11 +156,14 @@ namespace CSGO_Font_Manager
 
         private static ComboBox FindSpecificCombo(Control row, string family)
         {
-            if (row == null) return null;
+            if (row == null)
+                return null;
+
             foreach (Control child in row.Controls)
             {
                 ComboBox combo = child as ComboBox;
-                if (combo == null) continue;
+                if (combo == null)
+                    continue;
                 if (combo.Tag != null && string.Equals(combo.Tag.ToString(), family, StringComparison.OrdinalIgnoreCase))
                     return combo;
             }
@@ -216,7 +172,8 @@ namespace CSGO_Font_Manager
 
         private void ApplySpecificTabContrast()
         {
-            if (generalSettingTabButton == null || specificSettingTabButton == null) return;
+            if (generalSettingTabButton == null || specificSettingTabButton == null)
+                return;
 
             generalSettingTabButton.ForeColor = GetReadableTextColor(generalSettingTabButton.BackColor);
             specificSettingTabButton.ForeColor = GetReadableTextColor(specificSettingTabButton.BackColor);
