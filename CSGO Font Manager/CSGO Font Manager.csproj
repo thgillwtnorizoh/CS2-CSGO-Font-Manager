@@ -115,6 +115,10 @@
     <Compile Include="Settings.cs" />
     <Compile Include="ReleaseInfo.cs" />
     <Compile Include="DualGameController.cs" />
+    <Compile Include="GamePathResolver.cs" />
+    <Compile Include="CsgoFontBackend.cs" />
+    <Compile Include="CsgoSpecificSettings.cs" />
+    <Compile Include="GameRestartController.cs" />
     <Compile Include="GameHintFont.cs" />
     <Compile Include="SpecificSettingsState.cs" />
     <Compile Include="StartupLayoutFinalizer.cs" />
