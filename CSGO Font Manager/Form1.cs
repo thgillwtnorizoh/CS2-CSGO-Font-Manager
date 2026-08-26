@@ -18,11 +18,9 @@ namespace CSGO_Font_Manager
 {
     public partial class Form1 : Form
     {
-        public const string AssemblyVersion = "3.6.0.0";
-        public static string VersionNumber = "3.6";    // Remember to update stableVersion.txt when releasing a new stable update.
-                                                       // This will notify all Font Manager 2.0 clients that there is an update available.
-                                                       // To push the notification, commit and push to the master repository on GitHub.
-        private const string CurrentVersion = "https://raw.githubusercontent.com/WilliamRagstad/Font-Manager/master/CSGO%20Font%20Manager/stableVersion.txt";
+        public const string AssemblyVersion = ReleaseInfo.AssemblyVersion;
+        public static string VersionNumber = ReleaseInfo.Version;
+        private const string CurrentVersion = ReleaseInfo.StableVersionUrl;
 
         public static string OldFontManagerFolder = $@"C:\Users\{Environment.UserName}\Documents\Font Manager\";
         public static string HomeFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\";
@@ -431,7 +429,7 @@ namespace CSGO_Font_Manager
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("https://github.com/WilliamRagstad/Font-Manager/blob/master/README.md#introduction");
+            Process.Start(ReleaseInfo.RepositoryUrl + "/blob/master/README.md#introduction");
         }
 
         private void donate_button_Click(object sender, EventArgs e)
@@ -822,8 +820,7 @@ namespace CSGO_Font_Manager
 
         private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(
-                "https://docs.google.com/forms/d/e/1FAIpQLSfkChgD2T-RYNyfBCRL2EjUQfJ3y8tvPKemGJca2kMU1jV8AQ/viewform?usp=sf_link");
+            Process.Start(ReleaseInfo.RepositoryUrl + "/issues");
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)
